@@ -1,10 +1,17 @@
 const { Plugin } = require('powercord/entities');
+const { React } = require("powercord/webpack");
 const fs = require('fs');
 
-ret = { result: "Something went wrong..." };
+const Settings = require("./components/Settings");
 
 module.exports = class Share extends Plugin {
     startPlugin() {
+        powercord.api.settings.registerSettings(this.entityID, {
+            category: this.entityID,
+            label: "Share Plugins",
+            render: (p) =>
+                React.createElement(Settings, {...p}),
+        });
         powercord.api.commands.registerCommand({
             command: 'share_plugin',
             usage: '{c} [plugin name]',
@@ -15,6 +22,7 @@ module.exports = class Share extends Plugin {
     }
 
     pluginWillUnload() {
+        powercord.api.settings.unregisterSettings(this.entityID);
         powercord.api.commands.unregisterCommand('share_plugin');
     }
 
@@ -32,10 +40,11 @@ module.exports = class Share extends Plugin {
                     }
                 }
                 if (url !== "") {
-                    console.log(url);
+                    if (this.settings.get("linkEmbed", false)) {
+                        url = "<" + url + ">";
+                    }
                     return { send: true, result: url };
                 } else {
-                    console.log(url);
                     return { result: "Unable to find a url in the .git config file." };
                 }
             } catch (err) {
