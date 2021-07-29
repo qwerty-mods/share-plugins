@@ -33,7 +33,6 @@ module.exports = class Share extends Plugin {
                             }
                         }
                         if (url !== "") {
-                            console.log(url)
                             return { send: true, result: url }
                         } else {
                             return { result: "Unable to find a url in the .git config file."}
