@@ -2,9 +2,9 @@ const { Plugin } = require('powercord/entities');
 const fs = require('fs');
 
 module.exports = class Share extends Plugin {
-    async startPlugin() {
+    startPlugin() {
         powercord.api.commands.registerCommand({
-            command: 'share plugin',
+            command: 'share_plugin',
             usage: '{c} [plugin name]',
             description: 'Share a plugin you have in the chat',
             executor: this.share.bind(this),
@@ -13,7 +13,7 @@ module.exports = class Share extends Plugin {
     }
 
     pluginWillUnload() {
-        powercord.api.commands.unregisterCommand('plugin');
+        powercord.api.commands.unregisterCommand('share_plugin');
     }
 
     share([id]) {
