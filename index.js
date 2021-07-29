@@ -1,6 +1,8 @@
 const { Plugin } = require('powercord/entities');
 const fs = require('fs');
 
+ret = { result: "Something went wrong..." };
+
 module.exports = class Share extends Plugin {
     startPlugin() {
         powercord.api.commands.registerCommand({
@@ -20,27 +22,25 @@ module.exports = class Share extends Plugin {
         if (powercord.pluginManager.plugins.has(id)) {
             const plugin = powercord.pluginManager.plugins.get(id);
             try {
-                fs.readFile(plugin.entityPath + '\\.git\\config', 'utf8', (err, data) => {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        data = data.split('\n').map(e => e.trim())
-                        let url=""
-                        for (var i=0;i<data.length;i++) {
-                            if (data[i].startsWith("url = ")) {
-                                url = data[i].replace(".git", "").replace("url = ", "");
-                                break;
-                            }
-                        }
-                        if (url !== "") {
-                            return { send: true, result: url }
-                        } else {
-                            return { result: "Unable to find a url in the .git config file."}
-                        }
+                let data = fs.readFileSync(plugin.entityPath + '\\.git\\config', 'utf8');
+                data = data.split('\n').map(e => e.trim());
+                let url = "";
+                for (var i=0;i<data.length;i++) {
+                    if (data[i].startsWith("url = ")) {
+                        url = data[i].replace(".git", "").replace("url = ", "");
+                        break;
                     }
-                })
+                }
+                if (url !== "") {
+                    console.log(url);
+                    return { send: true, result: url };
+                } else {
+                    console.log(url);
+                    return { result: "Unable to find a url in the .git config file." };
+                }
             } catch (err) {
-                return { result: "There isn't a .git folder for this plugin." }
+                console.log(err);
+                return { result: "Unable to find the plugin's .git folder."};
             }
         }
     }
