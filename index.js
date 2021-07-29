@@ -51,7 +51,7 @@ module.exports = class Share extends Plugin {
         }
         return {
             commands: [...powercord.pluginManager.plugins]
-            .filter(([id]) => id.includes(findId))
+            .filter(([id]) => id.includes(findId) && !id.startsWith("pc-"))
             .map(([id]) => ({ command: id })),
             header: 'plugins list',
         };
