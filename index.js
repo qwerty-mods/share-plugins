@@ -1,6 +1,7 @@
 const { Plugin } = require('powercord/entities');
 const { React } = require("powercord/webpack");
 const fs = require('fs');
+const path = require('path');
 
 const Settings = require("./components/Settings");
 
@@ -30,7 +31,7 @@ module.exports = class Share extends Plugin {
         if (powercord.pluginManager.plugins.has(id)) {
             const plugin = powercord.pluginManager.plugins.get(id);
             try {
-                let data = fs.readFileSync(plugin.entityPath + '\\.git\\config', 'utf8');
+                let data = fs.readFileSync(path.resolve(plugin.entityPath, '.git', 'config'), 'utf8');
                 data = data.split('\n').map(e => e.trim());
                 let url = "";
                 for (var i=0;i<data.length;i++) {
