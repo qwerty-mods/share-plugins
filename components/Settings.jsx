@@ -7,6 +7,6 @@ module.exports = ({ getSetting, toggleSetting }) => <>
         onChange={() => {
             toggleSetting('linkEmbed', false)
         }}
-        note="When enabled, plugin links sent will not show an embed."
+        note="When enabled, plugin and theme links sent will not show an embed."
     >Hide Link Embed</SwitchItem>
 </>

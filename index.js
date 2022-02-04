@@ -17,17 +17,25 @@ module.exports = class Share extends Plugin {
             command: 'share_plugin',
             usage: '{c} [plugin name]',
             description: 'Share a plugin you have in the chat',
-            executor: this.share.bind(this),
-            autocomplete: this.autocomplete.bind(this),
+            executor: this.sharePlugin.bind(this),
+            autocomplete: this.autocompletePlugins.bind(this),
+        });
+        powercord.api.commands.registerCommand({
+            command: 'share_theme',
+            usage: '{c} [theme name]',
+            description: 'Share a theme you have in the chat',
+            executor: this.shareTheme.bind(this),
+            autocomplete: this.autocompleteThemes.bind(this),
         });
     }
 
     pluginWillUnload() {
         powercord.api.settings.unregisterSettings(this.entityID);
         powercord.api.commands.unregisterCommand('share_plugin');
+        powercord.api.commands.unregisterCommand('share_theme');
     }
 
-    share([id]) {
+    sharePlugin([id]) {
         if (powercord.pluginManager.plugins.has(id)) {
             const plugin = powercord.pluginManager.plugins.get(id);
             try {
@@ -55,7 +63,36 @@ module.exports = class Share extends Plugin {
         }
     }
 
-    autocomplete([findId, ...args]) {
+    
+    shareTheme([id]) {
+        if (powercord.styleManager.themes.has(id)) {
+            const theme = powercord.styleManager.themes.get(id);
+            try {
+                let data = fs.readFileSync(path.resolve(theme.entityPath, '.git', 'config'), 'utf8');
+                data = data.split('\n').map(e => e.trim());
+                let url = "";
+                for (var i=0;i<data.length;i++) {
+                    if (data[i].startsWith("url = ")) {
+                        url = data[i].replace(".git", "").replace("url = ", "");
+                        break;
+                    }
+                }
+                if (url !== "") {
+                    if (this.settings.get("linkEmbed", false)) {
+                        url = "<" + url + ">";
+                    }
+                    return { send: true, result: url };
+                } else {
+                    return { result: "Unable to find a url in the .git config file." };
+                }
+            } catch (err) {
+                console.log(err);
+                return { result: "Unable to find the theme's .git folder."};
+            }
+        }
+    }
+
+    autocompletePlugins([findId, ...args]) {
         if (args.length) {
             return false;
         }
@@ -64,6 +101,18 @@ module.exports = class Share extends Plugin {
             .filter(([id]) => id.includes(findId) && !id.startsWith("pc-"))
             .map(([id]) => ({ command: id })),
             header: 'plugins list',
+        };
+    }
+
+    autocompleteThemes([findId, ...args]) {
+        if (args.length) {
+            return false;
+        }
+        return {
+            commands: [...powercord.styleManager.themes]
+            .filter(([id]) => id.includes(findId) && !id.startsWith("pc-"))
+            .map(([id]) => ({ command: id })),
+            header: 'themes list',
         };
     }
 }
