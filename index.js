@@ -1,9 +1,12 @@
 const { Plugin } = require('powercord/entities');
-const { React } = require('powercord/webpack');
+const { React, getModule, constants: { ComponentActions } } = require('powercord/webpack');
 const fs = require('fs');
 const path = require('path');
 
 const Settings = require('./components/Settings');
+
+const { openURL } = getModule([ 'openURL' ], false);
+const { ComponentDispatch } = getModule([ 'ComponentDispatch' ], false);
 
 module.exports = class Share extends Plugin {
   startPlugin () {
@@ -43,27 +46,41 @@ module.exports = class Share extends Plugin {
       .replace('url = ', '');
   }
 
-  sharePlugin ([ id ]) {
+  share (data, args) {
+    data = data.split('\n').map(e => e.trim());
+    let url = '';
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].startsWith('url = ')) {
+        url = this.formatUrl(data[i]);
+        break;
+      }
+    }
+    if (url !== '') {
+      if (args.includes('--open')) {
+        openURL(url);
+        return;
+      }
+      if ((this.settings.get('linkEmbed', false) || args.includes('--no-embed')) && !args.includes('--embed')) {
+        url = `<${url}>`;
+      }
+      if (args.includes('--no-send')) {
+        this.appendText(url);
+        return;
+      }
+      return {
+        send: true,
+        result: url
+      };
+    }
+    return { result: 'Unable to find a url in the .git config file.' };
+  }
+
+  sharePlugin ([ id, ...args ]) {
     if (powercord.pluginManager.plugins.has(id)) {
       const plugin = powercord.pluginManager.plugins.get(id);
       try {
-        let data = fs.readFileSync(path.resolve(plugin.entityPath, '.git', 'config'), 'utf8');
-        data = data.split('\n').map(e => e.trim());
-        let url = '';
-        for (let i = 0; i < data.length; i++) {
-          if (data[i].startsWith('url = ')) {
-            url = this.formatUrl(data[i]);
-            break;
-          }
-        }
-        if (url !== '') {
-          if (this.settings.get('linkEmbed', false)) {
-            url = `<${url}>`;
-          }
-          return { send: true,
-            result: url };
-        }
-        return { result: 'Unable to find a url in the .git config file.' };
+        const data = fs.readFileSync(path.resolve(plugin.entityPath, '.git', 'config'), 'utf8');
+        return this.share(data, args);
       } catch (err) {
         console.log(err);
         return { result: 'Unable to find the plugin\'s .git folder.' };
@@ -71,28 +88,12 @@ module.exports = class Share extends Plugin {
     }
   }
 
-
-  shareTheme ([ id ]) {
+  shareTheme ([ id, ...args ]) {
     if (powercord.styleManager.themes.has(id)) {
       const theme = powercord.styleManager.themes.get(id);
       try {
-        let data = fs.readFileSync(path.resolve(theme.entityPath, '.git', 'config'), 'utf8');
-        data = data.split('\n').map(e => e.trim());
-        let url = '';
-        for (let i = 0; i < data.length; i++) {
-          if (data[i].startsWith('url = ')) {
-            url = this.formatUrl(data[i]);
-            break;
-          }
-        }
-        if (url !== '') {
-          if (this.settings.get('linkEmbed', false)) {
-            url = `<${url}>`;
-          }
-          return { send: true,
-            result: url };
-        }
-        return { result: 'Unable to find a url in the .git config file.' };
+        const data = fs.readFileSync(path.resolve(theme.entityPath, '.git', 'config'), 'utf8');
+        return this.share(data, args);
       } catch (err) {
         console.log(err);
         return { result: 'Unable to find the theme\'s .git folder.' };
@@ -114,9 +115,22 @@ module.exports = class Share extends Plugin {
       .map(([ id ]) => ({ command: id }));
   }
 
+  autocompleteFlags (args) {
+    const lastArg = args[args.length - 1].toLowerCase();
+    if (!lastArg.startsWith('-')) {
+      return false;
+    }
+    const flags = [ '--open', '--no-send', '--embed', '--no-embed' ];
+    return {
+      commands: flags.filter(flag => flag.startsWith(lastArg) && !args.includes(flag))
+        .map(x => ({ command: x })),
+      header: 'options list'
+    };
+  }
+
   autocompletePlugins ([ findId, ...args ]) {
     if (args.length) {
-      return false;
+      return this.autocompleteFlags(args);
     }
     return {
       commands: this.filterMatches(powercord.pluginManager.plugins, findId),
@@ -126,11 +140,23 @@ module.exports = class Share extends Plugin {
 
   autocompleteThemes ([ findId, ...args ]) {
     if (args.length) {
-      return false;
+      return this.autocompleteFlags(args);
     }
     return {
       commands: this.filterMatches(powercord.pluginManager.themes, findId),
       header: 'themes list'
     };
+  }
+
+  appendText (text) {
+    ComponentDispatch.dispatchToLastSubscribed(
+      ComponentActions.TEXTAREA_FOCUS
+    );
+    setTimeout(() => {
+      ComponentDispatch.dispatchToLastSubscribed(ComponentActions.INSERT_TEXT, {
+        plainText: text,
+        rawText: text
+      });
+    }, 0);
   }
 };
