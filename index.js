@@ -60,9 +60,14 @@ module.exports = class Share extends Plugin {
         openURL(url);
         return;
       }
-      if ((this.settings.get('linkEmbed', false) || args.includes('--no-embed')) && !args.includes('--embed')) {
-        url = `<${url}>`;
+      if ((this.settings.get('repo', false) && !args.includes('--no-repo')) || args.includes('--repo')) {
+        if ((this.settings.get('linkEmbed', false) || args.includes('--no-embed')) && !args.includes('--embed')) {
+          url = `<${url}>`;
+        }
+      } else {
+        url = `<https://replugged.dev/install?url=${url}>`;
       }
+
       if (args.includes('--no-send')) {
         this.appendText(url);
         return;
@@ -120,7 +125,7 @@ module.exports = class Share extends Plugin {
     if (!lastArg.startsWith('-')) {
       return false;
     }
-    const flags = [ '--open', '--no-send', '--embed', '--no-embed' ];
+    const flags = [ '--repo', '--no-repo', '--open', '--no-send', '--embed', '--no-embed' ];
     return {
       commands: flags.filter(flag => flag.startsWith(lastArg) && !args.includes(flag))
         .map(x => ({ command: x })),
