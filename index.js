@@ -148,7 +148,7 @@ module.exports = class Share extends Plugin {
       return this.autocompleteFlags(args);
     }
     return {
-      commands: this.filterMatches(powercord.pluginManager.themes, findId),
+      commands: this.filterMatches(powercord.styleManager.themes, findId),
       header: 'themes list'
     };
   }
