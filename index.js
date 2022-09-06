@@ -1,15 +1,35 @@
 const { Plugin } = require('powercord/entities');
 const { React, getModule, constants: { ComponentActions } } = require('powercord/webpack');
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 
-const Settings = require('./components/Settings');
+// const Settings = require('./components/Settings');
 
-const { openURL } = getModule([ 'openURL' ], false);
-const { ComponentDispatch } = getModule([ 'ComponentDispatch' ], false);
+// const { openURL } = getModule([ 'openURL' ], false);
+// const { ComponentDispatch } = getModule([ 'ComponentDispatch' ], false);
 
 module.exports = class Share extends Plugin {
   startPlugin () {
+		powercord.api.notices.sendAnnouncement("share-plugins-deprecation", {
+			color: "red",
+			message: React.createElement(
+				"div",
+        null,
+				"Share Plugins has been deprecated as it has been merged with ",
+				React.createElement(
+					"a",
+					{ href: "https://replugged.dev" },
+					"replugged core"
+				),
+        "."
+			),
+			button: {
+				onClick: () => powercord.pluginManager.disable("share-plugins"),
+				text: "Disable the plugin"
+			}
+		});
+		return;
+
     powercord.api.settings.registerSettings(this.entityID, {
       category: this.entityID,
       label: 'Share Plugins',
@@ -33,6 +53,8 @@ module.exports = class Share extends Plugin {
   }
 
   pluginWillUnload () {
+    return;
+
     powercord.api.settings.unregisterSettings(this.entityID);
     powercord.api.commands.unregisterCommand('share_plugin');
     powercord.api.commands.unregisterCommand('share_theme');
